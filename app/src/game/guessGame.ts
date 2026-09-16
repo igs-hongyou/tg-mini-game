@@ -45,6 +45,36 @@ export function addPlayer(state: RoomState, player: Player): RoomState {
   return { ...state, players: [...state.players, player] };
 }
 
+/** A player's connection dropped or they left. Removes them from the roster and, if a round
+ *  is in progress, from the turn order too — adjusting whose turn it is so the game can keep
+ *  going. If too few players are left to continue, falls back to the waiting room. */
+export function removePlayer(state: RoomState, playerId: string): RoomState {
+  const players = state.players.filter((p) => p.id !== playerId);
+
+  if (state.phase !== 'playing') {
+    return { ...state, players };
+  }
+
+  const removedIndex = state.turnOrder.indexOf(playerId);
+  if (removedIndex === -1) {
+    return { ...state, players };
+  }
+
+  const turnOrder = state.turnOrder.filter((id) => id !== playerId);
+  if (turnOrder.length < MIN_PLAYERS) {
+    return { ...state, players, phase: 'waiting', turnOrder: [], currentTurnIndex: 0, loserId: null };
+  }
+
+  let currentTurnIndex = state.currentTurnIndex;
+  if (removedIndex < currentTurnIndex) {
+    currentTurnIndex -= 1;
+  } else if (removedIndex === currentTurnIndex) {
+    currentTurnIndex %= turnOrder.length;
+  }
+
+  return { ...state, players, turnOrder, currentTurnIndex };
+}
+
 /** Host-only: picks the secret and starts a round. Secret is returned separately and must
  *  never be included in the broadcast RoomState. */
 export function startRound(state: RoomState): { state: RoomState; secret: number } {

@@ -114,6 +114,12 @@ button.secondary {
   flex-wrap: wrap;
 }
 
+.toast {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--tg-theme-link-color, #6ab3f3);
+}
+
 .player-list,
 .history-list {
   list-style: none;

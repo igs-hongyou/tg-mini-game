@@ -1,35 +1,45 @@
+import { shareURL } from '@telegram-apps/sdk-react';
+import { useState } from 'react';
 import { MIN_PLAYERS } from '../game/guessGame';
 import { useGame } from '../net/GameContext';
 import { buildRoomDeepLink } from '../telegram/botConfig';
+import { isMobilePlatform } from '../telegram/init';
+import { copyToClipboard } from '../utils/clipboard';
+
+const INVITE_TEXT = '一起來猜密碼，猜中密碼的人就輸了！';
+const TOAST_DURATION_MS = 2000;
 
 export function WaitingRoom() {
   const { state, isHost, roomId, status, errorMessage, startGame, leaveRoom } = useGame();
+  const [toast, setToast] = useState<string | null>(null);
   if (!state) return null;
 
   // Deep link into the bot's Direct Link Mini App (set up via @BotFather's /newapp) so
   // whoever opens it lands straight in this room, even if they've never messaged the bot.
-  // This is copied to the clipboard rather than opened as a `t.me/share/url` link: opening
-  // that link navigates Telegram's WebView away from the Mini App and closes it — which for
-  // the host would also kill the WebRTC connection everyone else is relying on.
   const deepLink = roomId ? buildRoomDeepLink(roomId) : '';
   const hostGone = status === 'disconnected' && !isHost;
+  // Telegram's own share sheet (shareURL) closes the Mini App — expected/fine on mobile,
+  // but on desktop it would also kill the host's WebRTC connection. So desktop copies the
+  // link to the clipboard instead of invoking the native share sheet.
+  const mobile = isMobilePlatform();
 
-  const copyRoomId = async () => {
-    if (!roomId) return;
-    try {
-      await navigator.clipboard.writeText(roomId);
-    } catch {
-      // clipboard API unavailable, ignore
-    }
+  const copyWithToast = async (text: string, successMessage: string) => {
+    const ok = await copyToClipboard(text);
+    setToast(ok ? successMessage : '複製失敗，請手動選取複製');
+    setTimeout(() => setToast(null), TOAST_DURATION_MS);
   };
 
-  const copyInviteLink = async () => {
+  const copyRoomId = () => {
+    if (roomId) copyWithToast(roomId, '房號已複製');
+  };
+
+  const shareInvite = () => {
     if (!deepLink) return;
-    try {
-      await navigator.clipboard.writeText(deepLink);
-    } catch {
-      // clipboard API unavailable, ignore
+    if (mobile && shareURL.isAvailable()) {
+      shareURL(deepLink, INVITE_TEXT);
+      return;
     }
+    copyWithToast(deepLink, '邀請連結已複製');
   };
 
   return (
@@ -41,12 +51,13 @@ export function WaitingRoom() {
           複製房號
         </button>
         {deepLink && (
-          <button className="link-button" onClick={copyInviteLink}>
-            複製邀請連結
+          <button className="link-button" onClick={shareInvite}>
+            {mobile ? '分享邀請' : '複製邀請連結'}
           </button>
         )}
       </div>
-      <p className="hint">複製邀請連結後，貼到任何 Telegram 對話分享即可，不會關閉這個頁面。</p>
+      {toast && <p className="toast">{toast}</p>}
+      {!mobile && <p className="hint">複製邀請連結後，貼到任何 Telegram 對話分享即可，不會關閉這個頁面。</p>}
 
       {errorMessage && <p className="error">{errorMessage}</p>}
 

@@ -4,6 +4,7 @@ import {
   applyGuess,
   createRoomState,
   GuessError,
+  removePlayer,
   resetForNewRound,
   startRound,
 } from '../game/guessGame';
@@ -129,6 +130,7 @@ export async function hostRoom(displayName: string, min: number, max: number): P
 
     conn.on('close', () => {
       connections.delete(conn.peer);
+      setState(removePlayer(state, conn.peer));
       emitStatus('disconnected', conn.peer);
     });
   });

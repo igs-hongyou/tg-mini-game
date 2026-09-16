@@ -1,5 +1,7 @@
-import { init as initSdk, restoreInitData, initDataStartParam, initDataUser } from '@telegram-apps/sdk-react';
+import { init as initSdk, restoreInitData, initDataStartParam, initDataUser, retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { mockTelegramEnvForDev } from './mockEnv';
+
+const MOBILE_PLATFORMS = new Set(['android', 'android_x', 'ios']);
 
 let initialized = false;
 
@@ -37,5 +39,16 @@ export function getLocalDisplayName(): string {
     // not running inside Telegram / init data unavailable
   }
   return `玩家${Math.floor(Math.random() * 1000)}`;
+}
+
+/** True on Telegram's mobile clients (iOS/Android), where the native share sheet is the
+ *  expected way to send a link. Everywhere else (desktop, web) we copy to the clipboard
+ *  instead — see WaitingRoom.tsx for why. */
+export function isMobilePlatform(): boolean {
+  try {
+    return MOBILE_PLATFORMS.has(retrieveLaunchParams().tgWebAppPlatform);
+  } catch {
+    return false;
+  }
 }
 
