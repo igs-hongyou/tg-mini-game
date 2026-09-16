@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "app", "run", "dev", "--", "--host"],
       "port": 5173
+    },
+    {
+      "name": "tgminigame-preview",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "app", "run", "preview", "--", "--host", "--port", "4173"],
+      "port": 4173
     }
   ]
 }
