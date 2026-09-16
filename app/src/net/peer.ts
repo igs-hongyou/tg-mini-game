@@ -35,6 +35,10 @@ const ROOM_ID_PREFIX = 'tgmg-';
 const HEARTBEAT_INTERVAL_MS = 4000;
 const HEARTBEAT_TIMEOUT_MS = 12000;
 
+// How long a guest waits for the initial connection to the host before giving up and
+// showing an error, in case something hangs without ever firing a PeerJS error event.
+const JOIN_TIMEOUT_MS = 15000;
+
 export function generateRoomId(length = 5): string {
   let code = '';
   for (let i = 0; i < length; i++) {
@@ -197,18 +201,51 @@ export async function joinRoom(roomId: string, displayName: string): Promise<Gam
   const emitState = () => listeners.forEach((l) => l(state));
   const emitStatus = (status: ConnectionStatus, detail?: string) => statusListeners.forEach((l) => l(status, detail));
 
-  await new Promise<void>((resolve, reject) => {
-    conn.on('open', () => {
-      const payload: PeerMessage = { type: 'join', player: localPlayer };
-      conn.send(payload);
-      emitStatus('connected');
-      resolve();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      // Connecting to a room whose host has already left doesn't fire conn's own 'open' or
+      // 'error' — the signaling server tells the *peer* it couldn't find that id, so without
+      // listening here too, this would just hang forever with the guest stuck on "connecting"
+      // and never told why. A timeout is also here as a last-resort net for any other failure
+      // mode that similarly never fires an event.
+      const timeoutTimer = setTimeout(() => {
+        reject(new Error('連線逾時，請確認房號是否正確，或請房主確認房間仍在開啟'));
+      }, JOIN_TIMEOUT_MS);
+
+      const cleanup = () => {
+        clearTimeout(timeoutTimer);
+        peer.off('error', onPeerError);
+      };
+
+      const onPeerError = (err: { type: string; message: string }) => {
+        cleanup();
+        const message =
+          err.type === 'peer-unavailable'
+            ? '找不到這個房間，可能房主已經離開，請確認房號或請房主重新建立房間'
+            : err.message || '加入房間失敗';
+        reject(new Error(message));
+      };
+
+      conn.on('open', () => {
+        cleanup();
+        const payload: PeerMessage = { type: 'join', player: localPlayer };
+        conn.send(payload);
+        emitStatus('connected');
+        resolve();
+      });
+      conn.on('error', (err) => {
+        cleanup();
+        reject(err);
+      });
+      peer.on('error', onPeerError);
     });
-    conn.on('error', (err) => {
-      emitStatus('error', err.message);
-      reject(err);
-    });
-  });
+  } catch (err) {
+    // Nothing has subscribed via onStatusChange yet at this point (the connection object
+    // hasn't been returned to the caller) — the failure reason reaches the UI through this
+    // rejection instead, which GameContext.joinExistingRoom turns into errorMessage.
+    peer.destroy();
+    throw err instanceof Error ? err : new Error('加入房間失敗');
+  }
 
   let lastMessageAt = Date.now();
   let declaredDisconnected = false;

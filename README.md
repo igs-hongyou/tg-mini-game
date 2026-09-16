@@ -77,6 +77,7 @@ Mini App 是純靜態網站，`npm run build` 產生的 `app/dist` 可以放到�
 - 「分享邀請」在桌面／網頁版是複製深連結到剪貼簿，而不是直接開啟 `t.me/share/url`：後者會讓 Telegram 把 Mini App 的網頁關閉（這是 Telegram 平台本身的行為，官方 SDK 的 `shareURL` / `openTelegramLink` 文件也都寫明「呼叫後會關閉 Mini App」），房主如果自己分享就會連帶斷線。在手機版（iOS / Android，見 `src/telegram/init.ts` 的 `isMobilePlatform`）則直接呼叫 SDK 的 `shareURL` 開啟原生分享面板，符合手機使用習慣。複製動作會先試 `navigator.clipboard`，失敗再退回 `document.execCommand('copy')`，並一律用 toast 顯示成功或失敗（`src/utils/clipboard.ts`）。
 - 玩家離開房間或斷線時，房主端會即時把該玩家從名單／輪流順序移除並廣播給所有人（`removePlayer`，見 `src/game/guessGame.ts`）；如果移除後剩下的人數不足以繼續遊戲，會自動退回等候室。
 - 深連結帶入的 `startapp` 房號只會在同一個瀏覽器分頁生命週期內自動加入一次（`takeStartParam`，見 `src/telegram/init.ts`）：因為 Telegram 的 launch params 在整個 session 內都不會變，若每次 Lobby 重新掛載都重讀，離開房間會立刻被同一個房號帶回去，等於離不開。
+- 加入一個不存在（例如房主已離開）的房間時，會顯示「找不到這個房間，可能房主已經離開…」並停止轉圈；PeerJS 對「連到不存在的 peer」這種失敗只會在 `Peer` 物件上觸發 `error`（`peer-unavailable`），不會在該次 `DataConnection` 上觸發，原本沒有監聽這個事件，會導致整個加入流程卡住轉圈轉到天荒地老（`joinRoom`，見 `src/net/peer.ts`），現在也加了 15 秒逾時保底，避免任何其他未知失敗情境一樣卡死。
 
 ## 遊戲畫面的其他細節
 
