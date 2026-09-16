@@ -6,12 +6,13 @@ function playerName(id: string, players: { id: string; name: string }[]): string
 }
 
 export function GameRoom() {
-  const { state, isHost, localPlayerId, sendGuess, restart, leaveRoom } = useGame();
+  const { state, isHost, localPlayerId, status, errorMessage, sendGuess, restart, leaveRoom } = useGame();
   const [guess, setGuess] = useState('');
   if (!state) return null;
 
   const currentPlayerId = state.turnOrder[state.currentTurnIndex];
   const isMyTurn = state.phase === 'playing' && currentPlayerId === localPlayerId;
+  const hostGone = status === 'disconnected' && !isHost;
 
   const submitGuess = () => {
     const value = Number(guess);
@@ -27,7 +28,9 @@ export function GameRoom() {
         目前範圍：<strong>{state.min}</strong> ~ <strong>{state.max}</strong>
       </p>
 
-      {state.phase === 'playing' && (
+      {errorMessage && <p className="error">{errorMessage}</p>}
+
+      {!hostGone && state.phase === 'playing' && (
         <>
           <p className="turn-indicator">
             {isMyTurn ? '輪到你猜了！' : `等待 ${playerName(currentPlayerId, state.players)} 猜測…`}

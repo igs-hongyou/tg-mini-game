@@ -27,6 +27,13 @@ const ICE_SERVERS: RTCIceServer[] = [
 const ROOM_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const ROOM_ID_PREFIX = 'tgmg-';
 
+// WebRTC's own disconnect detection (ICE failure) can take 30s+ to fire, which left guests
+// staring at a frozen "waiting for host" screen with no idea the host was gone. The host
+// instead pings everyone on an interval, and guests treat prolonged silence as a disconnect
+// well before the underlying ICE connection actually reports failure.
+const HEARTBEAT_INTERVAL_MS = 4000;
+const HEARTBEAT_TIMEOUT_MS = 12000;
+
 export function generateRoomId(length = 5): string {
   let code = '';
   for (let i = 0; i < length; i++) {
@@ -131,6 +138,13 @@ export async function hostRoom(displayName: string, min: number, max: number): P
 
   emitState();
 
+  const heartbeatTimer = setInterval(() => {
+    const payload: PeerMessage = { type: 'heartbeat' };
+    connections.forEach((conn) => {
+      if (conn.open) conn.send(payload);
+    });
+  }, HEARTBEAT_INTERVAL_MS);
+
   return {
     isHost: true,
     localPlayerId: localPlayer.id,
@@ -159,6 +173,7 @@ export async function hostRoom(displayName: string, min: number, max: number): P
       }
     },
     destroy: () => {
+      clearInterval(heartbeatTimer);
       connections.forEach((c) => c.close());
       peer.destroy();
     },
@@ -193,16 +208,30 @@ export async function joinRoom(roomId: string, displayName: string): Promise<Gam
     });
   });
 
+  let lastMessageAt = Date.now();
+  let declaredDisconnected = false;
+  const declareDisconnected = () => {
+    if (declaredDisconnected) return;
+    declaredDisconnected = true;
+    clearInterval(silenceCheckTimer);
+    emitStatus('disconnected');
+  };
+
   conn.on('data', (raw) => {
+    lastMessageAt = Date.now();
     const message = raw as PeerMessage;
     if (message.type === 'state_sync') {
       state = message.state;
       emitState();
     }
   });
-  conn.on('close', () => emitStatus('disconnected'));
+  conn.on('close', declareDisconnected);
 
   peer.on('error', (err) => emitStatus('error', err.message));
+
+  const silenceCheckTimer = setInterval(() => {
+    if (Date.now() - lastMessageAt > HEARTBEAT_TIMEOUT_MS) declareDisconnected();
+  }, HEARTBEAT_INTERVAL_MS);
 
   const send = (message: PeerMessage) => {
     if (conn.open) conn.send(message);
@@ -225,6 +254,7 @@ export async function joinRoom(roomId: string, displayName: string): Promise<Gam
     restart: () => send({ type: 'restart' }),
     sendGuess: (value) => send({ type: 'guess', value }),
     destroy: () => {
+      clearInterval(silenceCheckTimer);
       conn.close();
       peer.destroy();
     },

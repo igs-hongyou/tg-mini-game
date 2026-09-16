@@ -73,9 +73,11 @@ Mini App 是純靜態網站，`npm run build` 產生的 `app/dist` 可以放到�
 - 使用 [PeerJS](https://peerjs.com/) 包裝 WebRTC DataChannel。房主建立房間時，向公用的 PeerJS Cloud 訊令伺服器（`0.peerjs.com`，免費）註冊一個房號，其他玩家用這個房號直接與房主的瀏覽器分頁建立 P2P 連線。
 - ICE 設定同時包含 Google 公用 STUN 與 [OpenRelay](https://www.metered.ca/tools/openrelay/) 免費 TURN 伺服器（`src/net/peer.ts`），提高在嚴格 NAT／行動網路環境下的連線成功率。
 - 所有玩家的猜測都送到房主驗證與計算，房主是該局唯一的權威來源，並把最新狀態廣播給所有人（`src/net/peer.ts` 的 `hostRoom` / `joinRoom`）。
+- 房主每 4 秒對所有人送一次心跳；玩家端若超過 12 秒收不到任何訊息，會主動判定房主已離線並顯示提示（`HEARTBEAT_INTERVAL_MS` / `HEARTBEAT_TIMEOUT_MS`，見 `src/net/peer.ts`）。這是為了不依賴瀏覽器原生的 WebRTC 斷線偵測——那個常常要 30 秒以上才會觸發。
+- 「分享到 Telegram」動作是複製深連結到剪貼簿，而不是直接開啟 `t.me/share/url`：後者會讓 Telegram 把 Mini App 的網頁關閉（這是 Telegram 平台本身的行為，官方 SDK 的 `shareURL` / `openTelegramLink` 文件也都寫明「呼叫後會關閉 Mini App」），房主如果自己分享就會連帶斷線。改成複製連結後，使用者要自己貼到想分享的對話裡，但頁面（與房主的連線）不會被中斷。
 
 ### 已知限制
 
-- **房主分頁關閉或斷線＝該局遊戲中止**：因為沒有後端接手權威狀態，房主離開後其他人只能重新建房。
+- **房主分頁關閉或斷線＝該局遊戲中止**：因為沒有後端接手權威狀態，房主離開後其他人只能重新建房（現在至少會在 12 秒內收到明確提示，不會一直卡在原畫面）。
 - 純 P2P 連線在少數網路環境（例如公司防火牆、對稱型 NAT）下仍可能失敗，雖已加上免費 TURN 備援，但無法保證 100% 連通。
 - 公用 PeerJS 訊令伺服器與 OpenRelay TURN 都沒有 SLA 保證。若之後要提高穩定度，可考慮申請一組免費的 [Metered.ca](https://www.metered.ca/) TURN 帳號（有免費額度），或自架 PeerServer。

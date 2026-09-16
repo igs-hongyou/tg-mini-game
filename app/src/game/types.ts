@@ -34,4 +34,5 @@ export type PeerMessage =
   | { type: 'guess'; value: number }
   | { type: 'start_game' }
   | { type: 'restart' }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message: string }
+  | { type: 'heartbeat' };

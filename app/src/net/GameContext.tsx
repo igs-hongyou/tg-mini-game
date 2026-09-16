@@ -43,6 +43,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     connection.onStatusChange((s, detail) => {
       setStatus(s);
       if (s === 'error') setErrorMessage(detail ?? '連線發生錯誤');
+      if (s === 'disconnected' && !connection.isHost) {
+        setErrorMessage('房主已離線，這一局無法繼續，請重新建立或加入房間');
+      }
     });
   }, []);
 
