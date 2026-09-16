@@ -1,0 +1,149 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+  background: var(--tg-theme-bg-color, #17212b);
+  color: var(--tg-theme-text-color, #f5f5f5);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+h2 {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+.hint {
+  color: var(--tg-theme-hint-color, #708499);
+  margin: 0;
+}
+
+.card {
+  background: var(--tg-theme-section-bg-color, #232e3c);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  flex: 1;
+}
+
+input {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--tg-theme-hint-color, #3a4a5c);
+  background: var(--tg-theme-bg-color, #17212b);
+  color: inherit;
+  font-size: 1rem;
+}
+
+.room-code-input {
+  width: 100%;
+}
+
+button {
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: var(--tg-theme-button-color, #5288c1);
+  color: var(--tg-theme-button-text-color, #ffffff);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.secondary {
+  background: transparent;
+  border: 1px solid var(--tg-theme-hint-color, #3a4a5c);
+  color: inherit;
+}
+
+.link-button {
+  background: transparent;
+  color: var(--tg-theme-link-color, #6ab3f3);
+  border: none;
+  padding: 4px 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-block;
+}
+
+.room-code-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.player-list,
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.player-list li,
+.history-list li {
+  background: var(--tg-theme-section-bg-color, #232e3c);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.range-display,
+.turn-indicator {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.result-banner {
+  background: var(--tg-theme-section-bg-color, #232e3c);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: center;
+}
+
+.error {
+  color: var(--tg-theme-destructive-text-color, #ec3942);
+}
