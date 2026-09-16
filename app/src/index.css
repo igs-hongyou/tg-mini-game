@@ -152,7 +152,7 @@ button.secondary {
 }
 
 .page.flash {
-  animation: turn-flash 0.5s ease-in-out 5;
+  animation: turn-flash 0.2s ease-in-out 5;
 }
 
 @keyframes turn-flash {

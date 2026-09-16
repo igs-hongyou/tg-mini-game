@@ -4,7 +4,7 @@ import { useGame } from '../net/GameContext';
 
 const TURN_PREVIEW_COUNT = 3;
 const HISTORY_PREVIEW_COUNT = 2;
-const TURN_FLASH_CYCLE_MS = 500;
+const TURN_FLASH_CYCLE_MS = 200;
 const TURN_FLASH_CYCLES = 5;
 const TURN_FLASH_DURATION_MS = TURN_FLASH_CYCLE_MS * TURN_FLASH_CYCLES;
 
@@ -68,10 +68,13 @@ export function GameRoom() {
   const historyStart = showAllHistory ? 0 : Math.max(0, state.history.length - HISTORY_PREVIEW_COUNT);
   const visibleHistory = state.history.slice(historyStart);
 
+  const guessValue = Number(guess);
+  const guessInRange = Number.isInteger(guessValue) && guessValue >= state.min && guessValue <= state.max;
+  const guessOutOfRange = guess !== '' && !guessInRange;
+
   const submitGuess = () => {
-    const value = Number(guess);
-    if (!Number.isInteger(value)) return;
-    sendGuess(value);
+    if (!guessInRange) return;
+    sendGuess(guessValue);
     setGuess('');
   };
 
@@ -93,19 +96,26 @@ export function GameRoom() {
             {isMyTurn ? '輪到你猜了！' : `等待 ${playerName(currentPlayerId, state.players)} 猜測…`}
           </p>
           {isMyTurn && (
-            <div className="row">
-              <input
-                type="number"
-                min={state.min}
-                max={state.max}
-                value={guess}
-                onChange={(e) => setGuess(e.target.value)}
-                placeholder={`${state.min} ~ ${state.max}`}
-              />
-              <button onClick={submitGuess} disabled={guess === ''}>
-                送出
-              </button>
-            </div>
+            <>
+              <div className="row">
+                <input
+                  type="number"
+                  min={state.min}
+                  max={state.max}
+                  value={guess}
+                  onChange={(e) => setGuess(e.target.value)}
+                  placeholder={`${state.min} ~ ${state.max}`}
+                />
+                <button onClick={submitGuess} disabled={!guessInRange}>
+                  送出
+                </button>
+              </div>
+              {guessOutOfRange && (
+                <p className="error">
+                  請輸入 {state.min} ~ {state.max} 之間的整數
+                </p>
+              )}
+            </>
           )}
 
           <h3>玩家順序</h3>
