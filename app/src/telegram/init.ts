@@ -47,9 +47,10 @@ export function takeStartParam(): string | undefined {
 export function getLocalDisplayName(): string {
   try {
     const user = initDataUser();
-    if (user) {
-      return user.username ? `@${user.username}` : [user.first_name, user.last_name].filter(Boolean).join(' ');
-    }
+    // Always prefer the real name (first_name is guaranteed present for a real Telegram
+    // user) over the @username handle, so players recognize each other by name in-game.
+    const fullName = user && [user.first_name, user.last_name].filter(Boolean).join(' ');
+    if (fullName) return fullName;
   } catch {
     // not running inside Telegram / init data unavailable
   }

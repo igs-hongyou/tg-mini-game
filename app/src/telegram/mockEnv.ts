@@ -35,7 +35,15 @@ export async function mockTelegramEnvForDev() {
         ['auth_date', (Date.now() / 1000).toFixed(0)],
         ['hash', 'dev-mock-hash'],
         ['signature', 'dev-mock-signature'],
-        ['user', JSON.stringify({ id: fakeUserId, first_name: `玩家${fakeUserId % 1000}` })],
+        [
+          'user',
+          JSON.stringify({
+            id: fakeUserId,
+            first_name: `測試`,
+            last_name: `${fakeUserId % 1000}`,
+            username: `dev_user_${fakeUserId}`,
+          }),
+        ],
       ]).toString(),
     ],
     ['tgWebAppVersion', '8.4'],
