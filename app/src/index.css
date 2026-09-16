@@ -150,6 +150,25 @@ button.secondary {
   margin: 0;
 }
 
+.turn-indicator.flash {
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin: -6px -10px;
+  animation: turn-flash 0.5s ease-in-out 3;
+}
+
+@keyframes turn-flash {
+  0%,
+  100% {
+    background: transparent;
+    color: inherit;
+  }
+  50% {
+    background: var(--tg-theme-button-color, #5288c1);
+    color: var(--tg-theme-button-text-color, #ffffff);
+  }
+}
+
 .result-banner {
   background: var(--tg-theme-section-bg-color, #232e3c);
   border-radius: 12px;

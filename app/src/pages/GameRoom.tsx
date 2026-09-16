@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { hapticFeedbackImpactOccurred } from '@telegram-apps/sdk-react';
+import { useEffect, useState } from 'react';
 import { useGame } from '../net/GameContext';
 
 const TURN_PREVIEW_COUNT = 3;
 const HISTORY_PREVIEW_COUNT = 2;
+const TURN_FLASH_DURATION_MS = 1500;
 
 function playerName(id: string, players: { id: string; name: string }[]): string {
   return players.find((p) => p.id === id)?.name ?? id;
@@ -14,6 +16,23 @@ export function GameRoom() {
   const [showAllTurnOrder, setShowAllTurnOrder] = useState(false);
   const [showAllHistory, setShowAllHistory] = useState(false);
   const [lastSeenRound, setLastSeenRound] = useState(state?.round);
+  const [flashTurn, setFlashTurn] = useState(false);
+
+  const isMyTurn =
+    state?.phase === 'playing' && state.turnOrder[state.currentTurnIndex] === localPlayerId;
+
+  // Grab attention the moment it becomes this player's turn: a brief flash on the turn
+  // indicator, plus a haptic tap on real Telegram mobile clients (the SDK call is a no-op
+  // wherever haptics aren't supported, e.g. desktop).
+  useEffect(() => {
+    if (!isMyTurn) return;
+    setFlashTurn(true);
+    if (hapticFeedbackImpactOccurred.isAvailable()) {
+      hapticFeedbackImpactOccurred('medium');
+    }
+    const timer = setTimeout(() => setFlashTurn(false), TURN_FLASH_DURATION_MS);
+    return () => clearTimeout(timer);
+  }, [isMyTurn]);
 
   // Collapse both lists again at the start of a fresh round rather than carrying an
   // "expanded" view over from the previous one. Adjusting state during render (rather than
@@ -27,7 +46,6 @@ export function GameRoom() {
   if (!state) return null;
 
   const currentPlayerId = state.turnOrder[state.currentTurnIndex];
-  const isMyTurn = state.phase === 'playing' && currentPlayerId === localPlayerId;
   const hostGone = status === 'disconnected' && !isHost;
 
   // Rotated so "up next" reads left-to-right starting from whoever's turn it is right now.
@@ -62,7 +80,7 @@ export function GameRoom() {
 
       {!hostGone && state.phase === 'playing' && (
         <>
-          <p className="turn-indicator">
+          <p className={`turn-indicator${flashTurn ? ' flash' : ''}`}>
             {isMyTurn ? '輪到你猜了！' : `等待 ${playerName(currentPlayerId, state.players)} 猜測…`}
           </p>
           {isMyTurn && (
