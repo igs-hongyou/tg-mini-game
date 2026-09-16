@@ -1,11 +1,17 @@
 import { MIN_PLAYERS } from '../game/guessGame';
 import { useGame } from '../net/GameContext';
+import { buildRoomDeepLink } from '../telegram/botConfig';
 
 export function WaitingRoom() {
   const { state, isHost, roomId, startGame, leaveRoom } = useGame();
   if (!state) return null;
 
-  const shareLink = roomId ? `https://t.me/share/url?url=${encodeURIComponent(`加入我的猜密碼房間：${roomId}`)}` : '';
+  // Deep link into the bot's Direct Link Mini App (set up via @BotFather's /newapp) so
+  // whoever opens it lands straight in this room, even if they've never messaged the bot.
+  const deepLink = roomId ? buildRoomDeepLink(roomId) : '';
+  const shareLink = deepLink
+    ? `https://t.me/share/url?url=${encodeURIComponent(deepLink)}&text=${encodeURIComponent('一起來猜密碼，猜中密碼的人就輸了！')}`
+    : '';
 
   const copyRoomId = async () => {
     if (!roomId) return;

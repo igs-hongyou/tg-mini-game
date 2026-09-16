@@ -34,13 +34,15 @@ npm run build   # 型別檢查 + 產生 dist/ 靜態檔案
 
 1. 對 **@BotFather** 傳送 `/newbot`，依提示輸入機器人名稱與唯一的 username（必須以 `bot` 結尾），完成後會拿到一組 **Bot Token**。這組 token 只有你自己留存即可，不需要放進這個專案（本專案完全不需要 bot token，因為沒有 bot 後端程式）。
 2. 傳送 `/mybots`，選擇剛建立的機器人 → **Bot Settings** → **Menu Button** → **Configure Menu Button**。
-3. 貼上你部署後的 HTTPS 網址（見下方部署步驟，例如 `https://your-project.pages.dev`），並設定按鈕文字，例如「開始遊戲」。
+3. 貼上你部署後的 HTTPS 網址（見下方部署步驟，例如 `https://igs-hongyou.github.io/tg-mini-game/`），並設定按鈕文字，例如「開始遊戲」。
 4. 之後任何人在該機器人的對話視窗底部，點擊選單按鈕就會開啟這個 Mini App。
-5. （可選）如果想要「分享房間連結，對方點了就直接加入」的體驗，改用 `/newapp` 設定成正式的 Mini App，並取得一個短名稱（short name）。之後即可組出深連結：
+5. 如果想要「分享房間連結，對方點了就直接加入」的體驗（不需要對方先跟 bot 聊過天），要用 `/newapp` 設定成正式的 **Direct Link Mini App**，並取得一個短名稱（short name）。之後即可組出深連結：
    ```
    https://t.me/<你的bot_username>/<short_name>?startapp=<房號>
    ```
-   使用者點這個連結，會直接開啟 Mini App 並自動帶入房號、進入加入房間流程（已在 `src/pages/Lobby.tsx` 處理 `startapp` 參數）。
+   使用者點這個連結，會直接開啟 Mini App 並自動帶入房號、進入加入房間流程（已在 `src/pages/Lobby.tsx` 處理 `startapp` 參數）。等候室的「分享到 Telegram」按鈕（`src/pages/WaitingRoom.tsx`）就是用這個深連結格式。
+
+   目前設定：`app/src/telegram/botConfig.ts` 內的 `BOT_USERNAME` / `MINI_APP_SHORT_NAME` 對應 `t.me/little_minigame_bot/guessnum`。如果之後改了 bot username 或 short name，記得同步更新這個檔案。
 
 全程都不需要撰寫或部署任何 Bot 後端程式碼——Menu Button 純粹是設定，不牽涉伺服器。
 
