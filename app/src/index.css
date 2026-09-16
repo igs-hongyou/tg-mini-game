@@ -50,6 +50,7 @@ h2 {
 .row {
   display: flex;
   gap: 10px;
+  min-width: 0;
 }
 
 label {
@@ -58,9 +59,11 @@ label {
   gap: 4px;
   font-size: 0.85rem;
   flex: 1;
+  min-width: 0;
 }
 
 input {
+  width: 100%;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid var(--tg-theme-hint-color, #3a4a5c);
