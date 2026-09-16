@@ -4,7 +4,9 @@ import { useGame } from '../net/GameContext';
 
 const TURN_PREVIEW_COUNT = 3;
 const HISTORY_PREVIEW_COUNT = 2;
-const TURN_FLASH_DURATION_MS = 1500;
+const TURN_FLASH_CYCLE_MS = 500;
+const TURN_FLASH_CYCLES = 5;
+const TURN_FLASH_DURATION_MS = TURN_FLASH_CYCLE_MS * TURN_FLASH_CYCLES;
 
 function playerName(id: string, players: { id: string; name: string }[]): string {
   return players.find((p) => p.id === id)?.name ?? id;
@@ -21,17 +23,24 @@ export function GameRoom() {
   const isMyTurn =
     state?.phase === 'playing' && state.turnOrder[state.currentTurnIndex] === localPlayerId;
 
-  // Grab attention the moment it becomes this player's turn: a brief flash on the turn
-  // indicator, plus a haptic tap on real Telegram mobile clients (the SDK call is a no-op
-  // wherever haptics aren't supported, e.g. desktop).
+  // Grab attention the moment it becomes this player's turn: the whole page flashes a few
+  // times, and on real Telegram mobile clients a haptic pulse fires alongside each flash — a
+  // single tap was too easy to miss, so this repeats it instead of just picking a stronger
+  // one-shot style (the SDK call is a no-op wherever haptics aren't supported, e.g. desktop).
   useEffect(() => {
     if (!isMyTurn) return;
     setFlashTurn(true);
+    const pulseTimers: ReturnType<typeof setTimeout>[] = [];
     if (hapticFeedbackImpactOccurred.isAvailable()) {
-      hapticFeedbackImpactOccurred('medium');
+      for (let i = 0; i < TURN_FLASH_CYCLES; i++) {
+        pulseTimers.push(setTimeout(() => hapticFeedbackImpactOccurred('heavy'), i * TURN_FLASH_CYCLE_MS));
+      }
     }
-    const timer = setTimeout(() => setFlashTurn(false), TURN_FLASH_DURATION_MS);
-    return () => clearTimeout(timer);
+    const flashTimer = setTimeout(() => setFlashTurn(false), TURN_FLASH_DURATION_MS);
+    return () => {
+      clearTimeout(flashTimer);
+      pulseTimers.forEach(clearTimeout);
+    };
   }, [isMyTurn]);
 
   // Collapse both lists again at the start of a fresh round rather than carrying an
@@ -67,7 +76,7 @@ export function GameRoom() {
   };
 
   return (
-    <div className="page">
+    <div className={`page${flashTurn ? ' flash' : ''}`}>
       <h1>猜密碼中</h1>
       <p className="range-display">
         目前範圍：<strong>{state.min}</strong> ~ <strong>{state.max}</strong>
@@ -80,7 +89,7 @@ export function GameRoom() {
 
       {!hostGone && state.phase === 'playing' && (
         <>
-          <p className={`turn-indicator${flashTurn ? ' flash' : ''}`}>
+          <p className="turn-indicator">
             {isMyTurn ? '輪到你猜了！' : `等待 ${playerName(currentPlayerId, state.players)} 猜測…`}
           </p>
           {isMyTurn && (

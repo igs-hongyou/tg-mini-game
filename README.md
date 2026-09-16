@@ -81,7 +81,7 @@ Mini App 是純靜態網站，`npm run build` 產生的 `app/dist` 可以放到�
 ## 遊戲畫面的其他細節
 
 - 猜測畫面會顯示本次猜中的機率（`1 / (目前範圍寬度)`）、接下來的玩家順序（預設顯示 3 位，可展開看全部）、猜測紀錄（預設顯示最近 2 筆，可展開看全部）。
-- 輪到自己猜測時，「輪到你猜了！」文字會閃爍 3 次提醒；在支援的 Telegram 手機版（iOS/Android）上還會同時觸發一次震動（`hapticFeedbackImpactOccurred`，見 `src/pages/GameRoom.tsx`）。桌面／網頁版沒有震動能力，SDK 呼叫會自動略過，不會出錯。
+- 輪到自己猜測時，整個畫面背景會閃爍 5 次（約 2.5 秒）提醒；在支援的 Telegram 手機版（iOS/Android）上還會同步震動 5 下（`hapticFeedbackImpactOccurred('heavy')`，見 `src/pages/GameRoom.tsx`）。桌面／網頁版沒有震動能力，SDK 呼叫會自動略過，不會出錯。
 - 玩家名稱一律使用 Telegram 的 first_name／last_name，不使用 @username 或內部 id（`getLocalDisplayName`，見 `src/telegram/init.ts`）。
 
 ### 已知限制
