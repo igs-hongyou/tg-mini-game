@@ -121,7 +121,8 @@ button.secondary {
 }
 
 .player-list,
-.history-list {
+.history-list,
+.turn-order-list {
   list-style: none;
   padding: 0;
   margin: 0;
@@ -131,10 +132,16 @@ button.secondary {
 }
 
 .player-list li,
-.history-list li {
+.history-list li,
+.turn-order-list li {
   background: var(--tg-theme-section-bg-color, #232e3c);
   padding: 8px 12px;
   border-radius: 8px;
+}
+
+.turn-order-list li.current {
+  border: 1px solid var(--tg-theme-button-color, #5288c1);
+  font-weight: 600;
 }
 
 .range-display,

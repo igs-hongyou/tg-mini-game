@@ -1,4 +1,4 @@
-import { init as initSdk, restoreInitData, initDataStartParam, initDataUser, retrieveLaunchParams } from '@telegram-apps/sdk-react';
+import { init as initSdk, restoreInitData, initDataUser, retrieveLaunchParams } from '@telegram-apps/sdk-react';
 import { mockTelegramEnvForDev } from './mockEnv';
 
 const MOBILE_PLATFORMS = new Set(['android', 'android_x', 'ios']);
@@ -21,12 +21,27 @@ export async function initTelegram(): Promise<void> {
   }
 }
 
-export function getStartParam(): string | undefined {
+function getStartParam(): string | undefined {
+  // This is the `startapp` value from a Direct Link Mini App (t.me/bot/app?startapp=...),
+  // which Telegram exposes as its own top-level launch param — not initData's start_param
+  // field, which is a different (attachment-menu) mechanism and stays empty here.
   try {
-    return initDataStartParam();
+    return retrieveLaunchParams().tgWebAppStartParam;
   } catch {
     return undefined;
   }
+}
+
+let startParamConsumed = false;
+
+/** The `startapp` deep-link param (used to auto-join a shared room), returned only once per
+ *  session. Telegram's launch params never change after launch, so without this, leaving a
+ *  room would send you straight back into it the moment Lobby remounts and re-reads the same
+ *  param — you'd never actually be able to leave. */
+export function takeStartParam(): string | undefined {
+  if (startParamConsumed) return undefined;
+  startParamConsumed = true;
+  return getStartParam();
 }
 
 export function getLocalDisplayName(): string {

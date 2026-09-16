@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { DEFAULT_MAX, DEFAULT_MIN } from '../game/guessGame';
 import { useGame } from '../net/GameContext';
-import { getStartParam } from '../telegram/init';
+import { takeStartParam } from '../telegram/init';
 
 export function Lobby() {
   const { createRoom, joinExistingRoom, status, errorMessage } = useGame();
@@ -11,7 +11,7 @@ export function Lobby() {
   const busy = status === 'connecting';
 
   useEffect(() => {
-    const startParam = getStartParam();
+    const startParam = takeStartParam();
     if (startParam) {
       setRoomCode(startParam);
       joinExistingRoom(startParam);

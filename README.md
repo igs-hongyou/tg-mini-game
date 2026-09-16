@@ -76,6 +76,11 @@ Mini App 是純靜態網站，`npm run build` 產生的 `app/dist` 可以放到�
 - 房主每 4 秒對所有人送一次心跳；玩家端若超過 12 秒收不到任何訊息，會主動判定房主已離線並顯示提示（`HEARTBEAT_INTERVAL_MS` / `HEARTBEAT_TIMEOUT_MS`，見 `src/net/peer.ts`）。這是為了不依賴瀏覽器原生的 WebRTC 斷線偵測——那個常常要 30 秒以上才會觸發。
 - 「分享邀請」在桌面／網頁版是複製深連結到剪貼簿，而不是直接開啟 `t.me/share/url`：後者會讓 Telegram 把 Mini App 的網頁關閉（這是 Telegram 平台本身的行為，官方 SDK 的 `shareURL` / `openTelegramLink` 文件也都寫明「呼叫後會關閉 Mini App」），房主如果自己分享就會連帶斷線。在手機版（iOS / Android，見 `src/telegram/init.ts` 的 `isMobilePlatform`）則直接呼叫 SDK 的 `shareURL` 開啟原生分享面板，符合手機使用習慣。複製動作會先試 `navigator.clipboard`，失敗再退回 `document.execCommand('copy')`，並一律用 toast 顯示成功或失敗（`src/utils/clipboard.ts`）。
 - 玩家離開房間或斷線時，房主端會即時把該玩家從名單／輪流順序移除並廣播給所有人（`removePlayer`，見 `src/game/guessGame.ts`）；如果移除後剩下的人數不足以繼續遊戲，會自動退回等候室。
+- 深連結帶入的 `startapp` 房號只會在同一個瀏覽器分頁生命週期內自動加入一次（`takeStartParam`，見 `src/telegram/init.ts`）：因為 Telegram 的 launch params 在整個 session 內都不會變，若每次 Lobby 重新掛載都重讀，離開房間會立刻被同一個房號帶回去，等於離不開。
+
+## 遊戲畫面的其他細節
+
+- 猜測畫面會顯示本次猜中的機率（`1 / (目前範圍寬度)`）、接下來的玩家順序（預設顯示 3 位，可展開看全部）、猜測紀錄（預設顯示最近 2 筆，可展開看全部）。
 
 ### 已知限制
 
